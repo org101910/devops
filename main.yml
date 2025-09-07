@@ -50,35 +50,6 @@
           - docker-compose-plugin
         state: present
 
-- name: Install Sysbox
-  hosts: daddy
-  tags: sysbox
-  vars:
-    sysbox_arch: arm64
-    sysbox_version: "0.6.7"
-
-  tasks:
-    - name: Download Sysbox
-      ansible.builtin.get_url:
-        url: https://github.com/nestybox/sysbox/releases/download/v{{ sysbox_version }}/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
-        dest: /home/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
-        mode: '0744'
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: Install jq
-      ansible.builtin.apt:
-        name:
-          - jq
-        state: present
-
-    - name: Install Sysbox
-      ansible.builtin.apt:
-        deb: /home/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
-        state: present
-
 - name: Install GitHub Self Hosted Runner
   hosts: daddy
   tags: github-runner
@@ -96,6 +67,12 @@
         create_home: true
         system: true
         shell: /sbin/nologin
+
+    - name: Add github-runner to docker group
+      ansible.builtin.user:
+        name: github-runner
+        groups: docker
+        append: true
 
     - name: Download GitHub Actions runner
       ansible.builtin.get_url:
