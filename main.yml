@@ -1,0 +1,138 @@
+- name: Install Docker
+  hosts: daddy
+  gather_facts: true
+  vars:
+    docker_arch: arm64
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install ca-certificates
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+        state: present
+
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755' # owner read, write execute, everyone else read + execute
+
+    - name: Download Docker GPG Key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0444' # everyone can read
+
+    - name: Add Docker APT Repository
+      ansible.builtin.apt_repository:
+        repo: >
+          deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_lsb.codename }} stable
+        state: present
+        filename: docker
+
+    - name: Update apt cache again
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker + Docker Compose through docker apt repo
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+- name: Install Sysbox
+  hosts: daddy
+  tags: sysbox
+  vars:
+    sysbox_arch: arm64
+    sysbox_version: "0.6.7"
+
+  tasks:
+    - name: Download Sysbox
+      ansible.builtin.get_url:
+        url: https://github.com/nestybox/sysbox/releases/download/v{{ sysbox_version }}/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
+        dest: /home/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
+        mode: '0744'
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install jq
+      ansible.builtin.apt:
+        name:
+          - jq
+        state: present
+
+    - name: Install Sysbox
+      ansible.builtin.apt:
+        deb: /home/sysbox-ce_{{ sysbox_version }}.linux_{{ sysbox_arch }}.deb
+        state: present
+
+- name: Install GitHub Self Hosted Runner
+  hosts: daddy
+  tags: github-runner
+  vars:
+    github_runner_arch: arm64
+    runner_version: "2.328.0"
+    runner_name: "linux-hosted-runner"
+    organization: org101910
+    github_runner_token: ASDM7ZIYARGM3LO4DVUG3EDIXWFGI
+
+  tasks:
+    - name: Create GitHub Runner User
+      ansible.builtin.user:
+        name: github-runner
+        create_home: true
+        system: true
+        shell: /sbin/nologin
+
+    - name: Download GitHub Actions runner
+      ansible.builtin.get_url:
+        url: "https://github.com/actions/runner/releases/download/v{{ runner_version }}/actions-runner-linux-{{ github_runner_arch }}-{{ runner_version }}.tar.gz"
+        dest: "/home/github-runner/actions-runner-{{ runner_version }}.tar.gz"
+        mode: '0744'
+
+    - name: Extract GitHub runner
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "/home/github-runner/actions-runner-{{ runner_version }}.tar.gz"
+        dest: "/home/github-runner/"
+        owner: github-runner
+        group: github-runner
+
+    - name: Configure runner
+      become: true
+      become_user: github-runner
+      ansible.builtin.command: >
+        ./config.sh
+        --url https://github.com/{{ organization }}
+        --token {{ github_runner_token }}
+        --unattended
+        --name {{ runner_name }}
+      args:
+        chdir: "/home/github-runner"
+        creates: "/home/github-runner/.runner"
+
+    - name: Install runner service
+      ansible.builtin.command: >
+        ./svc.sh install github-runner
+      args:
+        chdir: "/home/github-runner"
+        creates: /etc/systemd/system/actions.runner.{{ organization }}.{{ runner_name }}.service
+
+    - name: Start and enable runner service
+      ansible.builtin.service:
+        name: actions.runner.{{ organization }}.{{ runner_name }}.service
+        state: started
+        enabled: true
