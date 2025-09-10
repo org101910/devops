@@ -1,5 +1,5 @@
 - name: Install Docker
-  hosts: daddy
+  hosts: linux
   gather_facts: true
   vars:
     docker_arch: arm64
@@ -51,14 +51,14 @@
         state: present
 
 - name: Install GitHub Self Hosted Runner
-  hosts: daddy
+  hosts: linux
   tags: github-runner
   vars:
     github_runner_arch: arm64
     runner_version: "2.328.0"
-    runner_name: "linux-hosted-runner"
-    organization: org101910
-    github_runner_token: ASDM7ZIYARGM3LO4DVUG3EDIXWFGI
+    runner_name: "ubuntu-16gb-nbg1-1"
+    organization: CD-Commerce
+    github_runner_token: ASDM7ZKWG5NJMKKJTH6X7PDIYGCWO 
 
   tasks:
     - name: Create GitHub Runner User
@@ -113,3 +113,64 @@
         name: actions.runner.{{ organization }}.{{ runner_name }}.service
         state: started
         enabled: true
+
+- name: Setup Nginx web server
+  hosts: linux
+  tags: nginx
+
+  tasks:
+    - name: Install Nginx (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Deploy custom Nginx config
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+- name: Setup https for linux.cd-commerce.cloud # assumes nginx installed and config includes http block for site
+  tags: linuxssl
+  hosts: linux
+
+  tasks:
+    - name: Ensure Certbot and Nginx plugin are installed
+      apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+        state: present
+
+    - name: Ensure nginx running
+      service:
+        name: nginx
+        state: started
+
+    - name: Run Certbot to get certificate (non-interactive)
+      command: >
+        certbot --nginx
+        -d linux.cd-commerce.cloud
+        --non-interactive
+        --agree-tos
+        -m j.dueck@cd-commerce.de
+        --redirect
+      args:
+        creates: /etc/letsencrypt/live/linux.cd-commerce.cloud/fullchain.pem
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded

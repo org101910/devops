@@ -1,0 +1,15 @@
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+events {}
+http {
+    server {
+        listen 80;
+        server_name linux.cd-commerce.cloud;
+        root /var/www/html;
+        index index.html;
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
