@@ -1,0 +1,49 @@
+- name: Configure SSL for domain
+  hosts: linux
+
+  tasks:
+    - name: Ensure config is up to date
+      ansible.builtin.copy:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+    - name: Ensure Certbot and Nginx plugin are installed
+      ansible.builtin.apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+        state: present
+
+    - name: Run Certbot to get certificate (non-interactive)
+      ansible.builtin.command: >
+        certbot --nginx
+        -d {{ domain }}
+        --non-interactive
+        --agree-tos
+        -m j.dueck@cd-commerce.de
+        --redirect
+      args:
+        creates: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+      notify:
+        - Restart nginx
+        - Pull config
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+    - name: Pull config
+      ansible.builtin.fetch:
+        src: /etc/nginx/nginx.conf
+        dest: ./nginx.conf
+        falt: true

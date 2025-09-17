@@ -1,0 +1,33 @@
+- name: Obtain ssl certificates
+  hosts: linux
+
+  tasks:
+    - name: Ensure Certbot and Nginx plugin are installed
+      ansible.builtin.apt:
+        name:
+          - certbot
+        state: present
+
+    - name: Stop nginx
+      ansible.builtin.service:
+        name: nginx
+        state: stopped
+
+    - name: Run Certbot to get certificate (non-interactive)
+      ansible.builtin.command: >
+        certbot certonly --standalone
+        -d {{ item }}
+        --non-interactive
+        --agree-tos
+        -m j.dueck@cd-commerce.de
+      args:
+        creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+      loop:
+        - product-research.cd-commerce.cloud
+        - auth.cd-commerce.cloud
+        - cogs.cd-commerce.cloud
+
+    - name: Start nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
