@@ -1,0 +1,61 @@
+- name: Install Nginx (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  register: nginx_ssl_installation
+
+- name: Ensure nginx running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+
+- name: Ensure Certbot is installed
+  ansible.builtin.apt:
+    name:
+      - certbot
+    state: present
+
+- name: Ensure certbot webroot directory exists
+  ansible.builtin.file:
+    path: /var/www/certbot
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Deploy initial nginx config
+  ansible.builtin.copy:
+    src: "nginx.initial.conf"
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_ssl_installation.changed
+
+- name: Load initial nginx config
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  when: nginx_ssl_installation.changed
+
+- name: Ensure all necessary certificates are installed (non-interactive)
+  ansible.builtin.command: >
+    certbot certonly --webroot
+    -w /var/www/certbot
+    -d {{ item }}
+    --non-interactive
+    --agree-tos
+    -m {{ nginx_ssl_domain_email }}
+  args:
+    creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+  loop: "{{ nginx_ssl_domains }}"
+
+- name: Deploy nginx config
+  ansible.builtin.copy:
+    src: "nginx.conf"
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx

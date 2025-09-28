@@ -1,0 +1,52 @@
+- name: Create GitHub Runner User
+  ansible.builtin.user:
+    name: github-runner
+    create_home: true
+    system: true
+    shell: /sbin/nologin
+
+- name: Add github-runner to docker group
+  ansible.builtin.user:
+    name: github-runner
+    groups: docker
+    append: true
+
+- name: Download GitHub Actions runner
+  ansible.builtin.get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_self_hosted_runner_version }}/actions-runner-linux-{{ github_self_hosted_runner_arch }}-{{ github_self_hosted_runner_version }}.tar.gz"
+    dest: "/home/github-runner/actions-runner-{{ github_self_hosted_runner_version }}.tar.gz"
+    mode: '0744'
+
+- name: Extract GitHub runner
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/home/github-runner/actions-runner-{{ github_self_hosted_runner_version }}.tar.gz"
+    dest: "/home/github-runner/"
+    owner: github-runner
+    group: github-runner
+
+- name: Configure runner
+  become: true
+  become_user: github-runner
+  ansible.builtin.command: >
+    ./config.sh
+    --url https://github.com/{{ github_self_hosted_runner_organization }}
+    --token {{ github_self_hosted_runner_token }}
+    --unattended
+    --name {{ github_self_hosted_runner_name }}
+  args:
+    chdir: "/home/github-runner"
+    creates: "/home/github-runner/.runner"
+
+- name: Install runner service
+  ansible.builtin.command: >
+    ./svc.sh install github-runner
+  args:
+    chdir: "/home/github-runner"
+    creates: /etc/systemd/system/actions.runner.{{ github_self_hosted_runner_organization }}.{{ github_self_hosted_runner_name }}.service
+
+- name: Start and enable runner service
+  ansible.builtin.service:
+    name: actions.runner.{{ github_self_hosted_runner_organization }}.{{ github_self_hosted_runner_name }}.service
+    state: started
+    enabled: true

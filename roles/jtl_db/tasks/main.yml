@@ -1,0 +1,31 @@
+- name: Fail if Ubuntu version is not supported
+  ansible.builtin.fail:
+    msg: "Ubuntu {{ ansible_distribution_version }} is not currently supported."
+  when: ansible_distribution_version not in jtl_db_supported_ubuntu_versions
+
+- name: Download Microsoft package for Ubuntu
+  ansible.builtin.get_url:
+    url: "https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb"
+    dest: "/root/packages-microsoft-prod.deb"
+    mode: '0644'
+
+- name: Install Microsoft package
+  ansible.builtin.apt:
+    deb: "/root/packages-microsoft-prod.deb"
+    state: present
+
+- name: Install msodbcsql18
+  ansible.builtin.apt:
+    name: "msodbcsql18"
+    state: present
+    update_cache: true
+  environment:
+    ACCEPT_EULA: "Y"
+
+- name: Deploy odbc config
+  ansible.builtin.copy:
+    src: odbc.ini
+    dest: /etc/odbc.ini
+    mode: "0644"
+    owner: root
+    group: root

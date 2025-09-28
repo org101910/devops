@@ -1,0 +1,5 @@
+#!/bin/bash
+source venv/bin/activate
+alias ssh='ssh -F ./ssh.cfg'
+export ANSIBLE_SSH_ARGS='-F ./ssh.cfg'
+alias ap='ansible-playbook infra.yml'

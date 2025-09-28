@@ -1,0 +1,21 @@
+#!/bin/bash
+# RUN THIS SCRIPT TO SETUP ansible on your system
+# AFTER THAT, run: source activate
+
+# Creates a virtual env in current directory called venv
+# Removes virtuale env venv if it already exists
+# Installs ansible inside the venv
+# It also creates an ssh key in .ssh folder of current directory
+# removes the folder if it already exists
+# and it adds the ssh key to all of our hosts with ssh-copy-id so that you can connect 
+# without entering password
+set -e
+
+rm -rf venv
+python3 -m venv venv 
+source venv/bin/activate
+pip install ansible
+rm -rf .ssh
+mkdir .ssh
+ssh-keygen -t ed25519 -f ./.ssh/key -N ""
+ssh-copy-id -F ./ssh.cfg -i ./.ssh/key root@linux

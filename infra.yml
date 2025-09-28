@@ -1,0 +1,30 @@
+- name: Setup Ubuntu Server
+  hosts: linux
+  gather_facts: true
+  roles:
+    - role: docker
+      tags: docker
+      vars:
+        docker_arch: arm64
+
+    - role: github_self_hosted_runner
+      tags: github
+      vars:
+        github_self_hosted_runner_arch: arm64
+        github_self_hosted_runner_version: "2.328.0"
+        github_self_hosted_runner_name: "ubuntu-16gb-nbg1-1"
+        github_self_hosted_runner_organization: CD-Commerce
+        github_self_hosted_runner_token: ASDM7ZKWG5NJMKKJTH6X7PDIYGCWO
+
+    - role: nginx_ssl
+      tags: nginx
+      vars:
+        nginx_ssl_domain_email: j.dueck@cd-commerce.de
+        nginx_ssl_domains:
+          - auth.cd-commerce.cloud
+          - product-research.cd-commerce.cloud
+          - cogs.cd-commerce.cloud
+          - cogs-tracker.cd-commerce.cloud
+
+    - role: jtl_db
+      tags: jtl
