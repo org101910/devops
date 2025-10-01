@@ -1,0 +1,17 @@
+- name: Create Task Scheduler User
+  ansible.builtin.user:
+    name: task-scheduler
+    system: true
+    shell: /sbin/nologin
+
+- name: Add task-scheduler user to docker group
+  ansible.builtin.user:
+    name: task-scheduler
+    groups: docker
+    append: true
+
+- name: Deploy task units
+  ansible.builtin.include_tasks: deploy_task.yml
+  loop: "{{ task_scheduler_tasks }}"
+  loop_control:
+    loop_var: task_name

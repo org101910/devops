@@ -1,0 +1,9 @@
+- name: Reload Task Services
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart Task Timers
+  ansible.builtin.systemd_service:
+    state: restarted
+    name: "{{ item }}.timer"
+  loop: "{{ task_scheduler_tasks }}"

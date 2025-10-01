@@ -1,0 +1,17 @@
+- name: Deploy service unit
+  ansible.builtin.copy:
+    src: "{{ task_name }}/{{ task_name }}.service"
+    dest: /etc/systemd/system/{{ task_name }}.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Task Services
+
+- name: Deploy timer unit
+  ansible.builtin.copy:
+    src: "{{ task_name }}/{{ task_name }}.timer"
+    dest: /etc/systemd/system/{{ task_name }}.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Task Timers

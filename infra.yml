@@ -27,3 +27,6 @@
 
     - role: jtl_db
       tags: jtl
+
+    - role: task_scheduler
+      tags: tasks
