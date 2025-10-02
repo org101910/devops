@@ -1,0 +1,11 @@
+[Unit]
+Description=Run my Docker job every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=1s
+Unit=cogs_syncjtl.service
+
+[Install]
+WantedBy=timers.target

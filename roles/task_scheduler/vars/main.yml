@@ -1,1 +1,2 @@
-task_scheduler_tasks: []
+task_scheduler_tasks:
+  - "cogs_syncjtl"

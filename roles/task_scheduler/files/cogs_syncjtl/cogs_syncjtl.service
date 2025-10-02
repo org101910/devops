@@ -1,0 +1,8 @@
+[Unit]
+Description=Test Run for some
+
+[Service]
+Type=oneshot
+User=task-scheduler
+Group=task-scheduler
+ExecStart=docker run --rm -e SHOULD_RUN=Y cogs-syncjtl:latest
