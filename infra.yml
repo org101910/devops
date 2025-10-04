@@ -34,6 +34,11 @@
     - role: grafana.grafana.alloy
       tags: alloy
       vars:
+        alloy_user_groups:
+          - "docker" # necessary for monitoring docker => needs access to docker socket
+        alloy_systemd_override: | # alloy needs to run as root to run cAdvisor
+          [Service]
+          User=root
         alloy_config: |
           remotecfg {
                   url            = "https://fleet-management-prod-011.grafana.net"
