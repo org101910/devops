@@ -1,3 +1,11 @@
+- name: Create task_envs Folder
+  ansible.builtin.file:
+    path: "/home/github-runner/task_envs"
+    state: directory
+    owner: github-runner
+    group: github-runner
+    mode: "0700"
+
 - name: Create Task Scheduler User
   ansible.builtin.user:
     name: task-scheduler
@@ -14,4 +22,4 @@
   ansible.builtin.include_tasks: deploy_task.yml
   loop: "{{ task_scheduler_tasks }}"
   loop_control:
-    loop_var: task_name
+    loop_var: task

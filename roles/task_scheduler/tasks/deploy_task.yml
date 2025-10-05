@@ -1,17 +1,19 @@
 - name: Deploy service unit
-  ansible.builtin.copy:
-    src: "{{ task_name }}/{{ task_name }}.service"
-    dest: /etc/systemd/system/{{ task_name }}.service
+  ansible.builtin.template:
+    src: "task.service.j2"
+    dest: /etc/systemd/system/{{ task.name }}.service
     owner: root
     group: root
     mode: "0644"
-  notify: Reload Task Services
+  notify: Reload Systemd Deamon 
 
 - name: Deploy timer unit
-  ansible.builtin.copy:
-    src: "{{ task_name }}/{{ task_name }}.timer"
-    dest: /etc/systemd/system/{{ task_name }}.timer
+  ansible.builtin.template:
+    src: "task.timer.j2"
+    dest: /etc/systemd/system/{{ task.name }}.timer
     owner: root
     group: root
     mode: "0644"
-  notify: Restart Task Timers
+  notify:
+    - Reload Systemd Deamon
+    - Restart Task Timers
