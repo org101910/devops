@@ -28,14 +28,6 @@
     - role: jtl_db
       tags: jtl
 
-    - role: task_scheduler
-      tags: tasks
-      vars:
-        task_scheduler_tasks:
-          - name: cogs_syncjtl
-            image: cogs-syncjtl
-            schedule: "*-*-* 06:00:00" #every day 6am
-
     - role: grafana.grafana.alloy
       tags: alloy
       vars:
