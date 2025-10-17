@@ -49,6 +49,7 @@
           - cogs.cd-commerce.cloud
           - niche-analysis.cd-commerce.cloud
           - additional-niche-data.cd-commerce.cloud
+          - reviews.cd-commerce.cloud
 
     - role: jtl_db
       tags: jtl
