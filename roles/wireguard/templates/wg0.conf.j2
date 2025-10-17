@@ -1,0 +1,8 @@
+[Interface]
+PrivateKey = {{ wireguard_linux_private_key }} 
+Address = 10.200.200.2/24
+
+[Peer]
+PublicKey = {{ wireguard_windows_public_key }} 
+AllowedIPs = 10.200.200.1/32
+Endpoint = {{ wireguard_windows_ip }}:51820
