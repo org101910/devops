@@ -47,6 +47,8 @@
           - auth.cd-commerce.cloud
           - product-research.cd-commerce.cloud
           - cogs.cd-commerce.cloud
+          - niche-analysis.cd-commerce.cloud
+          - additional-niche-data.cd-commerce.cloud
 
     - role: jtl_db
       tags: jtl
