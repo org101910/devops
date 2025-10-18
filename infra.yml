@@ -50,6 +50,8 @@
           - niche-analysis.cd-commerce.cloud
           - additional-niche-data.cd-commerce.cloud
           - reviews.cd-commerce.cloud
+          - jtl-query.cd-commerce.cloud
+          - jtl-ameise.cd-commerce.cloud
 
     - role: jtl_db
       tags: jtl
